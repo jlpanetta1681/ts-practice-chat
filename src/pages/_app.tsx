@@ -4,8 +4,8 @@ import type { AppRouter } from "../server/router";
 import type { AppType } from "next/dist/shared/lib/utils";
 import superjson from "superjson";
 import { SessionProvider } from "next-auth/react";
-import "../styles/globals.css";
-import { httpBatchLink } from '@trpc/client//links/httpBatchLink';
+import { loggerLink } from '@trpc/client/links/loggerLink';
+import { httpBatchLink } from '@trpc/client/links/httpBatchLink';
 import { wsLink, createWSClient } from '@trpc/client/links/wsLink';
 
 
@@ -51,29 +51,34 @@ function getEndingLink(){
 
 export default withTRPC<AppRouter>({
   config({ ctx }) {
-    /**
-     * If you want to use SSR, you need to use the server's full URL
-     * @link https://trpc.io/docs/ssr
-     */
+    const links = [
+      loggerLink(),
+      httpBatchLink({
+        maxBatchSize: 10,
+        url,
+      }),
+    ]
 
     return {
-      links: [getEndingLink()],
-      transformer: superjson,
-      /**
-       * @link https://react-query.tanstack.com/reference/QueryClient
-       */
-      // queryClientConfig: { defaultOptions: { queries: { staleTime: 60 } } },
+      queryClientConfig: {
+        defaultOptions: {
+          queries: {
+            staleTime: 60,
+          },
+        },
+      },
       headers() {
         if (ctx?.req) {
-          return { ...ctx.req.headers }
+          return {
+            ...ctx.req.headers,
+            'x-ssr': '1',
+          }
         }
         return {}
       },
-    };
+      links,
+      transformer: superjson,
+    }
   },
-  /**
-   * @link https://trpc.io/docs/ssr
-   */
   ssr: false,
-})(MyApp);
-
+})(MyApp)
