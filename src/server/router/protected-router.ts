@@ -1,4 +1,7 @@
-`A  Qimport * as trpc from "@trpc/server";
+
+
+export {}
+`A import * as trpc from "@trpc/server";
 import { createRouter } from "./context";
 
 /**
@@ -17,4 +20,5 @@ export function createProtectedRouter() {
       },
     });
   });
-}
+}`
+export {};
